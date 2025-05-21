@@ -56,6 +56,14 @@ La extensión ahora estará instalada y activada. Al abrir una nueva pestaña, v
 - El rendimiento puede variar dependiendo de la complejidad de la visualización y la potencia de la computadora.
 
 ## Créditos
+Codigo
+- [J-Aca]
 
-[uso personal]
+Musica
+- [Eru Nabura](https://x.com/EruNabura)
+
+Arte de Fondo
+-[Ragus](https://x.com/Ragus_art/)
+-[sourse](https://x.com/Ragus_art/status/1749093504578449778)
+
 ## Licencia MIT
