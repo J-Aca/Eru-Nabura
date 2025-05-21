@@ -1,0 +1,82 @@
+
+#eru {
+    width: -webkit-fill-available;
+    top: -48px;
+    position: absolute;
+  right: 0;
+  bottom: 0;z-index: -1;
+}
+#tapa {
+  position: absolute;
+  right: 0;
+  bottom: 0; 
+  height: 100%;
+  width: 100%;
+  background-color: #00113547;
+}
+
+#reloj {
+zoom: 60%;
+padding-top: 15px;
+}
+
+html, body, {
+  height: 100%;
+  width: 100%;
+  color: #000;background-color: #000;
+}
+html {
+ 
+  background-color: #000;
+  background: #000;
+  color: #000;
+}
+body {
+  display: flex;
+  flex-direction: column;
+opacity: var(--opacity-f);
+  color: #000;
+}
+main {
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  flex: 1;
+  align-items: center;
+display: flex 
+
+}
+
+main {
+  font-size: 34px;
+}
+
+
+#ww {
+    top: 0;
+    display: block;
+    position: absolute;
+    right: 0;
+    opacity: 0.5;
+}
+
+
+
+body {
+    overflow: hidden;
+  color: #000;
+}
+
+object#nreloj {
+    background: transparent;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    left: 0;
+    right: 0;
+}
+
+
+
