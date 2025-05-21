@@ -59,7 +59,7 @@ La extensión ahora estará instalada y activada. Al abrir una nueva pestaña, v
 Codigo
 - [J-Aca](https://github.com/J-Aca/Eru-Nabura)
 
-Musica. 
+Musica covers. 
 - [Eru Nabura](https://x.com/EruNabura)
 
 Arte de Fondo. 
