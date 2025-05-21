@@ -1,4 +1,5 @@
 # Extensión de Visualización de Audio para Nueva Pestaña
+[![Imagen Preview de la Extensión](imagen_preview.png)](imagen_preview.png)
 
 Esta extensión de Chrome reemplaza la página de nueva pestaña predeterminada con un visualizador de audio interactivo y un reproductor de música integrado. Personaliza la apariencia de la visualización, controla la reproducción de tu música local y disfruta de una experiencia de nueva pestaña inmersiva.
 
