@@ -59,10 +59,10 @@ La extensión ahora estará instalada y activada. Al abrir una nueva pestaña, v
 Codigo
 - [J-Aca]
 
-Musica
+Musica. 
 - [Eru Nabura](https://x.com/EruNabura)
 
-Arte de Fondo
+Arte de Fondo. 
 -[Ragus](https://x.com/Ragus_art/)
 -[sourse](https://x.com/Ragus_art/status/1749093504578449778)
 
