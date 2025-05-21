@@ -1,4 +1,4 @@
-# Extensión de Visualización de Audio para Nueva Pestaña                              - ∇ Eru Nabura
+# Extensión de Visualización de Audio para Nueva Pestaña                              - ∇ Eru Nabura 
 
 [![Imagen Preview de la Extensión](imagen_preview.png)](imagen_preview.png)
 
