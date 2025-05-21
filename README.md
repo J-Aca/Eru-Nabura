@@ -63,7 +63,7 @@ Musica.
 - [Eru Nabura](https://x.com/EruNabura)
 
 Arte de Fondo. 
--[Ragus](https://x.com/Ragus_art/)
--[sourse](https://x.com/Ragus_art/status/1749093504578449778)
+- [Ragus](https://x.com/Ragus_art/)
+- [sourse](https://x.com/Ragus_art/status/1749093504578449778)
 
 ## Licencia MIT
