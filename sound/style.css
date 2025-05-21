@@ -1,0 +1,240 @@
+::-webkit-scrollbar {
+    width: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #ffe081;
+}
+::-webkit-scrollbar-thumb {
+    background: #8c8c8c;
+}
+::-webkit-scrollbar-track {
+    background: #242424;
+} 
+#erudito {
+    margin: 0;
+    overflow: hidden; /* Prevent scrollbars when menu is out of bounds */
+    background-color: #00000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    color: #fff;
+}
+
+canvas {
+    display: block;
+    background-color: #00000000;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    opacity: 0.5;
+}
+
+/* Hide the original controls as they are replaced by the inline menu */
+.controls, .volume-control {
+    display: none;
+}
+
+/* --- Controls Panel Styles --- */
+#controlsPanel {
+    position: fixed;
+    top: 5px;
+    right: -345px; /* Start off-screen to the right */
+    width: 300px; /* 300 */
+    height: 93%; /* 100% */
+    background-color: rgba(34, 34, 34, 0.95); /* Semi-transparent dark background */
+    color: #eee;
+    padding: 20px;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+    transition: right 0.8s ease-in-out; /* Smooth sliding transition */
+    z-index: 100; /* Ensure it's on top */
+    overflow-y: auto; /* Enable scrolling for content if needed */
+    zoom: 0.70;
+}
+
+#controlsPanel.open {
+    right: 0;
+    zoom: 0.73;
+    top: 0;
+    width: 300px; /* 300 */
+    height: 100%; /* 100% */
+transition: right 0.5s ease-in-out; /* Smooth sliding transition */
+}
+
+#controlsPanel h1 {
+    color: #007bff;
+    text-align: center;
+    margin: 0px;
+    padding-bottom: 7px;
+}
+
+#controlsPanel .section {
+    background-color: rgba(51, 51, 51, 0.8);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#controlsPanel h2 {
+    color: #009bff; /* Slightly different blue for section headers */
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.music-controls {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 15px;
+}
+
+.music-controls button,
+.volume-control-inline button {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.music-controls button:hover,
+.volume-control-inline button:hover {
+    background-color: #0056b3;
+}
+
+.volume-control-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.volume-control-inline label {
+    margin-right: 10px;
+}
+
+.volume-control-inline input[type="range"] {
+    -webkit-appearance: none;
+    width: 150px;
+    height: 8px;
+    background: #555;
+    outline: none;
+    border-radius: 4px;
+    cursor: grab;
+}
+
+.volume-control-inline input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: grab;
+    border: 2px solid #fff;
+    box-shadow: 0 0 4px rgba(0, 123, 255, 0.7);
+}
+
+.setting-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.setting-group label {
+    flex: 1;
+    margin-right: 10px;
+    font-size: 0.95em;
+}
+
+.setting-group select,
+.setting-group input[type="range"] {
+    flex: 2;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background-color: #444;
+    color: #eee;
+    font-size: 0.9em;
+}
+
+/* Open/Close Buttons for the panel */
+#openControlsButton {
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    /* Puedes ajustar el padding o quitarlo, ya que el triángulo se hará con el borde */
+    padding: 10px 15px; /* Mantén el padding para el área clicleable si quieres */
+    font-size: 1.5em; /* Puedes eliminar esto si solo usas el triángulo CSS */
+    background-color: transparent;
+    color: white; /* Esto no afectará al triángulo de borde, pero puede ser útil si pones texto */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 100;
+    transition: background-color 0.3s ease;
+
+    /* Estilos para centrar el triángulo si el botón tiene padding */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Asegura que el triángulo no se salga del botón */
+}
+
+#openControlsButton::after {
+    content: ''; /* Es esencial para que la pseudo-clase sea visible */
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent; /* Lado izquierdo del triángulo */
+    border-right: 10px solid transparent; /* Lado derecho del triángulo */
+    border-top: 15px solid #ffe700; /* La base del triángulo (apunta hacia abajo) */
+    /* Ajusta los valores (10px y 15px) para cambiar el tamaño y la forma del triángulo */
+    position: absolute; /* Para centrarlo si el botón tiene padding */
+}
+
+#openControlsButton:hover {
+    background-color: transparent;
+}
+
+#closeControlsButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    font-size: 1.2em;
+    background-color: transparent;
+    color: #eee;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#closeControlsButton:hover {
+    background-color: rgba(255, 0, 0, 0.7);
+    border-color: rgba(255, 0, 0, 0.7);
+    color: white;
+}
+#resetDefaultsButton {
+    display: block; /* Makes it take full width */
+    width: 100%; /* Ensures it fills the setting-group */
+    padding: 10px 15px;
+    margin-top: 20px; /* Add some space above it */
+    font-size: 1em;
+    background-color: #dc3545; /* Red color for reset */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#resetDefaultsButton:hover {
+    background-color: #c82333; /* Darker red on hover */
+}

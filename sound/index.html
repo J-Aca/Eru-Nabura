@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Espectro de Audio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="erudito">
+    <audio id="audioPlayer" controls style="display: none;">
+        <source src="" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+
+    <canvas id="audioSpectrumCanvas"></canvas>
+    <button id="openControlsButton">∇</button>
+    <div id="controlsPanel">
+        <button id="closeControlsButton">X</button>
+        <h1>Controles Visuales</h1>
+
+        <div class="section">
+            <h2>Música</h2>
+            <div class="music-controls">
+                <button id="prevSongButton">Anterior</button>
+                <button id="togglePlayPauseButton">Reproducir </button>
+                <button id="nextSongButton">Siguiente</button>
+            </div>
+            <div class="volume-control-inline">
+                <label for="volumeSliderInline">Volumen:</label>
+                <input type="range" id="volumeSliderInline" min="0" max="1" step="0.01" value="1">
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Ajustes De Color</h2>
+            <div class="setting-group">
+                <label for="barColorSelect">Color de Barras:</label>
+                <select id="barColorSelect">
+                    <option value="dynamic">Dinámico</option>
+                    <option value="blue">Azul</option>
+                    <option value="green">Verde</option>
+                    <option value="red">Rojo</option>
+                    <option value="purple">Morado</option>
+                    <option value="orange">Naranja</option>
+                    <option value="cyan">Cian</option>
+                    <option value="magenta">Magenta</option>
+                    <option value="yellow">Amarillo</option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label for="waveLineColorSelect">Color de Líneas Onduladas:</label>
+                <select id="waveLineColorSelect">
+                    <option value="dynamic">Dinámico</option>
+        <option value="white">Blanco</option>
+        <option value="orange">Naranja</option>
+        <option value="pink">Rosa</option>
+        <option value="red">Rojo</option>
+        <option value="green">Verde</option>
+        <option value="blue">Azul</option>
+        <option value="yellow">Amarillo</option>
+        <option value="purple">Morado</option>
+        <option value="cyan">Cian</option>
+        <option value="magenta">Magenta</option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label for="pokerChipColorSelect">Color de Fichas de Póker:</label>
+                <select id="pokerChipColorSelect">
+                    <option value="random">Aleatorio</option>
+        <option value="green">Verde</option>
+        <option value="gray">Gris</option>
+        <option value="gold">Dorado</option>
+        <option value="red">Rojo</option>
+        <option value="blue">Azul</option>
+        <option value="yellow">Amarillo</option>
+        <option value="purple">Morado</option>
+        <option value="cyan">Cian</option>
+        <option value="magenta">Magenta</option>
+        <option value="orange">Naranja</option>
+               </select>
+            </div>
+
+<div class="setting-group">
+    <label for="outerTriangleColorSelect">Color Triángulo Exterior:</label>
+    <select id="outerTriangleColorSelect">
+        <option value="light-blue">Azul  Claro</option>
+        <option value="blue">Azul</option>
+        <option value="red">Rojo</option>
+        <option value="green">Verde</option>
+        <option value="yellow">Amarillo</option>
+        <option value="purple">Morado</option>
+        <option value="cyan">Cian</option>
+        <option value="magenta">Magenta</option>
+        <option value="white">Blanco</option>
+        <option value="black">Negro</option>
+        <option value="orange">Naranja</option>
+        <option value="lime">Lima</option>
+        <option value="gold">Dorado</option>
+        <option value="silver">Plateado</option>
+        <option value="teal">Verde Azulado</option>
+        <option value="indigo">Índigo</option>
+        <option value="maroon">Granate</option>
+        <option value="olive">Oliva</option>
+        <option value="navy">Azul Marino</option>
+        <option value="pink">Rosa</option>
+        <option value="brown">Marrón</option>
+        <option value="grey">Gris</option>
+    </select>
+</div>
+<div class="setting-group">
+    <label for="innerTriangleColorSelect">Color Triángulo Interior:</label>
+    <select id="innerTriangleColorSelect">
+        <option value="light-blue">Azul Claro</option>
+        <option value="blue">Azul</option>
+        <option value="red">Rojo</option>
+        <option value="green">Verde</option>
+        <option value="yellow">Amarillo</option>
+        <option value="purple">Morado</option>
+        <option value="cyan">Cian</option>
+        <option value="magenta">Magenta</option>
+        <option value="white">Blanco</option>
+        <option value="black">Negro</option>
+        <option value="orange">Naranja</option>
+        <option value="lime">Lima</option>
+        <option value="gold">Dorado</option>
+        <option value="silver">Plateado</option>
+        <option value="teal">Verde Azulado</option>
+        <option value="indigo">Índigo</option>
+        <option value="maroon">Granate</option>
+        <option value="olive">Oliva</option>
+        <option value="navy">Azul Marino</option>
+        <option value="pink">Rosa</option>
+        <option value="brown">Marrón</option>
+        <option value="grey">Gris</option>
+    </select>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            <div class="setting-group">
+                <label for="visualizerTypeSelect">Tipo de Visualizador:</label>
+                <select id="visualizerTypeSelect">
+                    <option value="all">Todas las Opciones</option>
+                    <option value="bars">Solo Barras</option>
+                    <option value="wavy">Solo Líneas Onduladas</option>
+                    <option value="chips">Solo Fichas de Póker</option>
+                    <option value="triangles">Solo Triángulos</option>
+                </select>
+            </div>
+            
+ <h2>Tamaños</h2>
+            <div class="setting-group">
+                <label for="barIntensitySlider">Tamaño de las Barras:</label>
+                <input type="range" id="barIntensitySlider" min="0.1" max="2" step="0.1" value="1">
+            </div>
+
+            <div class="setting-group">
+                <label for="waveIntensitySlider">Tamaño de la Onda:</label>
+                <input type="range" id="waveIntensitySlider" min="0.1" max="2" step="0.1" value="1">
+            </div>
+
+<div class="setting-group">
+    <label for="triangleSizeSlider">Tamaño de Triángulos:</label>
+    <input type="range" id="triangleSizeSlider" min="0.1" max="2" value="1" step="0.1">
+</div>
+<h2>Sensibilidad ⚠️</h2>
+<div class="setting-group">
+                <label for="intensitySlider">Sensibilidad General:</label>
+                <input type="range" id="intensitySlider" min="0.1" max="2" step="0.1" value="1">
+            </div>
+
+
+
+
+            <div class="setting-group" style="display: none;">
+                <label for="pokerChipSizeSlider">Tamaño de las Fichas:</label>
+                <input type="range" id="pokerChipSizeSlider" min="0.1" max="3" step="0.05" value="1.5">
+            </div>
+<div class="setting-group">
+                <button id="resetDefaultsButton">Restablecer Valores Predeterminados</button>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
