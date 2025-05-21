@@ -1,0 +1,42 @@
+{
+    "name": "Eru Nabura Tab",
+  "version": "1.2.5",
+  "manifest_version": 3,
+"icons": {
+    "16": "favicon.png",
+    "32": "favicon.png",
+    "48": "favicon.png",
+    "128": "favicon.png"
+  },
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "description": "New Tab Eru",
+  "permissions": [
+        "activeTab",
+        "storage"
+    ],
+  "host_permissions": [
+        "<all_urls>"
+    ],
+"background": {
+        "service_worker": "background.js"
+    },
+"content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["sound/script.js"],
+            "css": ["sound/style.css"]
+        }
+    ],
+"web_accessible_resources": [
+        {
+          "resources": ["sound/audio/*"],
+          "matches": ["<all_urls>"]
+        }
+    ],
+"content_security_policy": {
+    "extension_pages": "default-src 'self'; style-src 'self' 'unsafe-inline'"
+}
+
+}
