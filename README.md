@@ -47,21 +47,6 @@ La extensión ahora estará instalada y activada. Al abrir una nueva pestaña, v
     - Haz clic en el botón de "Cerrar Controles" para ocultar el panel de personalización.
 4.  --Restablecer Configuración:-- Si deseas volver a la configuración predeterminada, haz clic en el botón "Restablecer Defaults" dentro del panel de controles.
 
-## Estructura de Archivos
-
-├── audio/
-│   ├── eru ∇.mp3
-│   ├── gerbera .mp3
-│   ├── MEGITSUNE.mp3
-│   ├── Odo.mp3
-│   └── AI.mp3
-├── index.html         (Página principal de la nueva pestaña)
-├── script.js          (Lógica principal de la extensión)
-├── manifest.json      (Archivo de configuración de la extensión)
-└── README.md          (Este archivo)
-
-
-Asegúrate de que tus archivos de audio estén en la carpeta `audio/` o ajusta las rutas en el archivo `script.js`.
 
 ## Notas
 
@@ -72,4 +57,4 @@ Asegúrate de que tus archivos de audio estén en la carpeta `audio/` o ajusta l
 ## Créditos
 
 [uso personal]
-## Licencia
+## Licencia MIT
