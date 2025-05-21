@@ -57,7 +57,7 @@ La extensión ahora estará instalada y activada. Al abrir una nueva pestaña, v
 
 ## Créditos
 Codigo
-- [J-Aca]
+- [J-Aca](https://github.com/J-Aca/Eru-Nabura)
 
 Musica. 
 - [Eru Nabura](https://x.com/EruNabura)
