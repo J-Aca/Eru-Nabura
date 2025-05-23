@@ -43,9 +43,9 @@ La extensión ahora estará instalada y activada. Al abrir una nueva pestaña, v
 2.  --Control de Reproducción:-- Utiliza los botones "Anterior", "Siguiente" y el control deslizante de volumen en la parte inferior de la pantalla.
 3.  --Personalización de la Visualización:--
     - Haz clic en el botón de "Abrir Controles" (generalmente un icono de ajustes o un botón similar) para abrir el panel de controles deslizante en el lado izquierdo de la pantalla.
-    - Utiliza los selectores de color (`barColorSelect`, `waveLineColorSelect`, `pokerChipColorSelect`, `innerTriangleColorSelect`, `outerTriangleColorSelect`) para cambiar los colores de los diferentes elementos visuales. Las opciones "dynamic" o "random" proporcionarán variaciones basadas en el audio.
-    - Utiliza los controles deslizantes (`intensitySlider`, `barIntensitySlider`, `waveIntensitySlider`, `triangleSizeSlider`) para ajustar la intensidad y el tamaño de las visualizaciones.
-    - Utiliza el selector de tipo de visualización (`visualizerTypeSelect`) para elegir qué visualizaciones mostrar. Puedes seleccionar múltiples opciones. La opción "all" mostrará todas las visualizaciones disponibles.
+    - Utiliza los selectores de color para cambiar los colores de los diferentes elementos visuales. Las opciones "dynamic" o "random" proporcionarán variaciones basadas en el audio.
+    - Utiliza los controles deslizantes para ajustar la intensidad y el tamaño de las visualizaciones.
+    - Utiliza el selector de tipo de visualización para elegir qué visualizaciones mostrar. Puedes seleccionar múltiples opciones. La opción "all" mostrará todas las visualizaciones disponibles.
     - Haz clic en el botón de "Cerrar Controles" para ocultar el panel de personalización.
 4.  --Restablecer Configuración:-- Si deseas volver a la configuración predeterminada, haz clic en el botón "Restablecer Defaults" dentro del panel de controles.
 
