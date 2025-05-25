@@ -1,6 +1,6 @@
 {
     "name": "Eru Nabura Tab",
-  "version": "1.2.6",
+  "version": "1.2.8",
   "manifest_version": 3,
 "icons": {
     "16": "favicon.png",
@@ -31,7 +31,7 @@
     ],
 "web_accessible_resources": [
         {
-          "resources": ["sound/audio/*"],
+          "resources": ["sound/audio/*.mp3"],
           "matches": ["<all_urls>"]
         }
     ],
