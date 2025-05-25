@@ -777,7 +777,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
             } catch (error) {
-                console.error("Error al seleccionar archivos con File System Access API:", error);
+                console.log("Error al seleccionar archivos con File System Access API:", error);
                 if (error.name === 'AbortError') {
                     console.log("Selección de archivo cancelada por el usuario.");
                 } else {
