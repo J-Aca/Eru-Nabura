@@ -15,7 +15,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         case 'loadSettings':
             chrome.storage.sync.get([
-                'volume', 'barColor', 'waveLineColor', 'pokerChipColor', 'intensity',
+                'volume', 'barColor', 'waveLineColor',
                 'barIntensity', 'waveIntensity', 'triangleSize', 'innerTriangleColor',
                 'outerTriangleColor', 'visualizerType', 'currentSongIndex'
             ], (syncResult) => {
