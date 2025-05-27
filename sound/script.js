@@ -18,9 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentTimeSpan = document.getElementById('currentTime');
         const totalTimeSpan = document.getElementById('totalTime');
         const barColorSelect = document.getElementById('barColorSelect');
-        const waveLineColorSelect = document.getElementById('waveLineColorSelect');
-        const pokerChipColorSelect = document.getElementById('pokerChipColorSelect');
-        const intensitySlider = document.getElementById('intensitySlider');
+        const waveLineColorSelect = document.getElementById('waveLineColorSelect');  
         const visualizerTypeSelect = document.getElementById('visualizerTypeSelect');
         const barIntensitySlider = document.getElementById('barIntensitySlider');
         const waveIntensitySlider = document.getElementById('waveIntensitySlider');
@@ -42,8 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const defaultSettings = {
             volume: 0.5,
             barColor: 'dynamic',
-            waveLineColor: 'dynamic',
-            pokerChipColor: 'random',
+            waveLineColor: 'dynamic', 
             intensity: 1,
             barIntensity: 1,
             waveIntensity: 1,
@@ -62,8 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         let currentBarColor = defaultSettings.barColor;
-        let currentWaveLineColor = defaultSettings.waveLineColor;
-        let currentPokerChipColor = defaultSettings.pokerChipColor;
+        let currentWaveLineColor = defaultSettings.waveLineColor; 
         let currentIntensity = defaultSettings.intensity;
         let currentBarIntensity = defaultSettings.barIntensity;
         let currentWaveIntensity = defaultSettings.waveIntensity;
@@ -114,8 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const drawAll = currentVisualizerTypes.includes('all');
             const drawBars = drawAll || currentVisualizerTypes.includes('bars');
-            const drawWavy = drawAll || currentVisualizerTypes.includes('wavy');
-            const drawChips = drawAll || currentVisualizerTypes.includes('chips');
+            const drawWavy = drawAll || currentVisualizerTypes.includes('wavy'); 
             const drawTriangles = drawAll || currentVisualizerTypes.includes('triangles');
 
             if (drawBars) {
@@ -234,110 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.stroke();
             }
 
-            if (drawChips) {
-                const overallVolume = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
-                if (pokerChips.length < MAX_POKER_CHIPS && overallVolume > 70) {
-                    const chipValue = Math.floor(Math.random() * 100) + 1;
-                    pokerChips.push(createPokerChip(chipValue, totalWidth, totalHeight));
-                }
-
-                for (let i = 0; i < pokerChips.length; i++) {
-                    const chip = pokerChips[i];
-                    chip.x += chip.vx;
-                    chip.y += chip.vy;
-                    chip.vy += 0.1;
-
-                    if (chip.y > totalHeight + chip.baseRadius * 2 || (Math.abs(chip.vx) < 0.1 && Math.abs(chip.vy) < 0.1 && chip.y > totalHeight - chip.baseRadius - 5)) {
-                        pokerChips.splice(i, 1);
-                        i--;
-                        continue;
-                    }
-
-                    const intensity = chip.value / 100;
-                    let hue;
-                    let chipCalculatedColor;
-                    let saturation = 0;
-                    let lightness = 0;
-
-                    switch (currentPokerChipColor) {
-                        case 'green': hue = 120; break;
-                        case 'gray': chipCalculatedColor = `rgba(150, 150, 150, ${1 - intensity * 0.5})`; break;
-                        case 'gold': hue = 40; break;
-                        case 'red': hue = 0; break;
-                        case 'blue': hue = 240; break;
-                        case 'yellow': hue = 60; break;
-                        case 'purple': hue = 270; break;
-                        case 'cyan': hue = 180; break;
-                        case 'magenta': hue = 300; break;
-                        case 'orange': hue = 30; break;
-                        case 'random':
-                        default:
-                            switch (chip.colorType) {
-                                case 'red': hue = 0 + (intensity * 20); break;
-                                case 'yellow': hue = 60 + (intensity * 20); break;
-                                case 'blue':
-                                default: hue = 200 + (intensity * 4); break;
-                            }
-                            break;
-                    }
-
-                    if (currentPokerChipColor !== 'gray') {
-                        const naburaSaturation = Math.min(100, saturation + 10);
-                        const naburaLightness = Math.min(100, lightness + 10);
-                        chipCalculatedColor = `hsl(${hue}, ${naburaSaturation}%, ${naburaLightness}%)`;
-                    }
-
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                    ctx.shadowBlur = 10;
-                    ctx.shadowOffsetX = 3;
-                    ctx.shadowOffsetY = 3;
-
-                    ctx.beginPath();
-                    ctx.arc(chip.x, chip.y, chip.baseRadius, 0, 2 * Math.PI);
-                    ctx.fillStyle = chipCalculatedColor;
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    ctx.closePath();
-
-                    const naburaRadius = chip.baseRadius * 0.6;
-                    ctx.beginPath();
-                    ctx.arc(chip.x, chip.y, naburaRadius, 0, 2 * Math.PI);
-                    const naburaGradient = ctx.createRadialGradient(
-                        chip.x - naburaRadius * 0.3,
-                        chip.y - naburaRadius * 0.3,
-                        naburaRadius * 0.1,
-                        chip.x,
-                        chip.y,
-                        naburaRadius
-                    );
-
-                    if (currentPokerChipColor !== 'gray') {
-                        const naburaSaturation = Math.min(100, saturation + 10);
-                        const naburaLightness = Math.min(100, lightness + 10);
-                        naburaGradient.addColorStop(0, `hsl(${hue}, ${naburaSaturation}%, ${naburaLightness}%)`);
-                        naburaGradient.addColorStop(1, chipCalculatedColor);
-                    } else {
-                        naburaGradient.addColorStop(0, `rgba(200, 200, 200, ${1 - intensity * 0.3})`);
-                        naburaGradient.addColorStop(1, chipCalculatedColor);
-                    }
-                    ctx.fillStyle = naburaGradient;
-                    ctx.fill();
-                    ctx.closePath();
-
-                    ctx.fillStyle = 'white';
-                    ctx.font = `bold ${16}px sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(chip.value, chip.x, chip.y);
-
-                    ctx.shadowColor = 'transparent';
-                    ctx.shadowBlur = 0;
-                    ctx.shadowOffsetX = 0;
-                    ctx.shadowOffsetY = 0;
-                }
-            }
+             
 
             // SOLO SOLICITA EL SIGUIENTE FRAME SI ESTÁ REPRODUCIÉNDOSE
             if (isPlaying) {
@@ -407,11 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentBarColor = result.barColor || defaultSettings.barColor;
                     barColorSelect.value = currentBarColor;
                     currentWaveLineColor = result.waveLineColor || defaultSettings.waveLineColor;
-                    waveLineColorSelect.value = currentWaveLineColor;
-                    currentPokerChipColor = result.pokerChipColor || defaultSettings.pokerChipColor;
-                    pokerChipColorSelect.value = currentPokerChipColor;
+                    waveLineColorSelect.value = currentWaveLineColor;  
                     currentIntensity = parseFloat(result.intensity) !== undefined ? parseFloat(result.intensity) : defaultSettings.intensity;
-                    intensitySlider.value = currentIntensity;
+                  
                     currentBarIntensity = parseFloat(result.barIntensity) !== undefined ? parseFloat(result.barIntensity) : defaultSettings.barIntensity;
                     barIntensitySlider.value = currentBarIntensity;
                     currentWaveIntensity = parseFloat(result.waveIntensity) !== undefined ? parseFloat(result.waveIntensity) : defaultSettings.waveIntensity;
@@ -480,12 +370,8 @@ document.addEventListener('DOMContentLoaded', () => {
             saveSetting('barColor', currentBarColor);
             currentWaveLineColor = settings.waveLineColor;
             waveLineColorSelect.value = currentWaveLineColor;
-            saveSetting('waveLineColor', currentWaveLineColor);
-            currentPokerChipColor = settings.pokerChipColor;
-            pokerChipColorSelect.value = currentPokerChipColor;
-            saveSetting('pokerChipColor', currentPokerChipColor);
-            currentIntensity = settings.intensity;
-            intensitySlider.value = currentIntensity;
+            saveSetting('waveLineColor', currentWaveLineColor);   
+            currentIntensity = settings.intensity; 
             saveSetting('intensity', currentIntensity);
             currentBarIntensity = settings.barIntensity;
             barIntensitySlider.value = currentBarIntensity;
@@ -720,27 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
         };
 
-        const pokerChips = []; // Declaración de pokerChips
-        const MAX_POKER_CHIPS = 5; // Declaración de MAX_POKER_CHIPS
-
-        function createPokerChip(value, canvasWidth, canvasHeight) {
-            const baseRadius = 30;
-            const initialX = Math.random() * (canvasWidth - baseRadius * 4) + baseRadius * 2;
-            const initialY = canvasHeight - baseRadius;
-            const vx = (Math.random() - 0.5) * 5;
-            const vy = -(5 + Math.random() * 10);
-            const colorTypes = ['blue', 'red', 'yellow', 'green', 'purple', 'cyan', 'magenta', 'orange'];
-            const randomColorType = colorTypes[Math.floor(Math.random() * colorTypes.length)];
-            return {
-                x: initialX,
-                y: initialY,
-                vx: vx,
-                vy: vy,
-                baseRadius: baseRadius,
-                value: value,
-                colorType: randomColorType
-            };
-        }
+        
 
         addSongsButton.addEventListener('click', async () => {
             try {
@@ -875,18 +741,9 @@ document.addEventListener('DOMContentLoaded', () => {
             saveSetting('waveLineColor', currentWaveLineColor);
             draw();
         });
+ 
 
-        pokerChipColorSelect.addEventListener('change', () => {
-            currentPokerChipColor = pokerChipColorSelect.value;
-            saveSetting('pokerChipColor', currentPokerChipColor);
-            draw();
-        });
-
-        intensitySlider.addEventListener('input', () => {
-            currentIntensity = parseFloat(intensitySlider.value);
-            saveSetting('intensity', currentIntensity);
-            draw();
-        });
+        
 
         barIntensitySlider.addEventListener('input', () => {
             currentBarIntensity = parseFloat(barIntensitySlider.value);
