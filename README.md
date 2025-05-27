@@ -36,10 +36,10 @@ La extensión ahora estará instalada y activada. Al abrir una nueva pestaña, v
 
 ## Uso
 
-1.  --Reproducción de Música:-- La extensión incluye una lista de reproducción predefinida en el archivo `index.html` (en la misma carpeta que este README). Para reproducir estas canciones, simplemente haz clic en el botón "Play". Puedes modificar la `playlist` en el código JavaScript (`index.html`) para incluir tus propios archivos de audio (asegúrate de que las rutas sean correctas). Los archivos de audio deben estar ubicados dentro de la carpeta de la extensión o ser accesibles mediante URLs.
+1.  --Reproducción de Música:-- La extensión incluye una lista de reproducción predefinida en el archivo `script.js` (en la carpeta Sound). Para reproducir estas canciones, simplemente haz clic en el botón "Play". Puedes modificar la `playlist` en el código JavaScript (`script.js`) para incluir tus propios archivos de audio (asegúrate de que las rutas sean correctas). Los archivos de audio deben estar ubicados dentro de la carpeta de la extensión (`sound/audio`).
 2.  --Control de Reproducción:-- Utiliza los botones "Anterior", "Siguiente" y el control deslizante de volumen en la parte inferior de la pantalla.
 3.  --Personalización de la Visualización:--
-    - Haz clic en el botón de "Abrir Controles" (generalmente un icono de ajustes o un botón similar) para abrir el panel de controles deslizante en el lado izquierdo de la pantalla.
+    - Haz clic en el botón de ("∇") para abrir el panel de controles deslizante en el lado izquierdo de la pantalla.
     - Utiliza los selectores de color para cambiar los colores de los diferentes elementos visuales. Las opciones "dynamic" o "random" proporcionarán variaciones basadas en el audio.
     - Utiliza los controles deslizantes para ajustar la intensidad y el tamaño de las visualizaciones.
     - Utiliza el selector de tipo de visualización para elegir qué visualizaciones mostrar. Puedes seleccionar múltiples opciones. La opción "all" mostrará todas las visualizaciones disponibles.
