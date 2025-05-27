@@ -9,17 +9,14 @@ Esta extensión de Chrome reemplaza la página de nueva pestaña predeterminada 
 - --Visualizaciones de Audio Dinámicas:-- Elige entre varios tipos de visualización:
     - --Barras:-- Clásicas barras de frecuencia que responden al ritmo de la música.
     - --Ondas:-- Líneas ondulantes que fluyen con el sonido.
-    - --Fichas de Póquer:-- Fichas animadas que rebotan y responden al volumen.
     - --Triángulos:-- Formas triangulares que pulsan al compás.
 - --Reproductor de Música Integrado:--
     - Controles de reproducción básicos: Play/Pause, Anterior, Siguiente.
     - Lista de reproducción predefinida (editable en el código).
     - Control de volumen.
 - --Personalización de la Visualización:--
-    - Selección de color para barras, ondas y fichas de póquer.
-    - Ajuste de la intensidad general de la visualización.
-    - Ajustes de intensidad individuales para barras y ondas.
-    - Control del tamaño de los triángulos.
+    - Selección de color para barras, ondas y triangulos.
+    - Ajustes de tamaño individuales para barras , ondas y triangulos.
     - Selección de color para los triángulos internos y externos.
     - Selección de múltiples tipos de visualización para mostrar simultáneamente.
 - --Persistencia de la Configuración:-- La extensión guarda tus preferencias (volumen, colores, tipo de visualización, última canción reproducida) para que se mantengan al abrir nuevas pestañas.
