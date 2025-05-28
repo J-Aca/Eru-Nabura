@@ -1,798 +1,907 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const currentUrl = window.location.href;
-    const newTabPageUrl = chrome.runtime.getURL("sound/index.html");
+  const currentUrl = window.location.href;
+  const newTabPageUrl = chrome.runtime.getURL("sound/index.html");
 
-    if (currentUrl === newTabPageUrl) {
-        const audioPlayer = document.getElementById('audioPlayer');
-        const canvas = document.getElementById('audioSpectrumCanvas');
-        const ctx = canvas.getContext('2d');
-        const controlsPanel = document.getElementById('controlsPanel');
-        const openControlsButton = document.getElementById('openControlsButton');
-        const closeControlsButton = document.getElementById('closeControlsButton');
-        const togglePlayPauseButton = document.getElementById('togglePlayPauseButton');
-        const prevSongButton = document.getElementById('prevSongButton');
-        const nextSongButton = document.getElementById('nextSongButton');
-        const volumeSliderInline = document.getElementById('volumeSliderInline');
-        const songSelect = document.getElementById('songSelect');
-        const songProgressBar = document.getElementById('songProgressBar');
-        const currentTimeSpan = document.getElementById('currentTime');
-        const totalTimeSpan = document.getElementById('totalTime');
-        const barColorSelect = document.getElementById('barColorSelect');
-        const waveLineColorSelect = document.getElementById('waveLineColorSelect');  
-        const visualizerTypeSelect = document.getElementById('visualizerTypeSelect');
-        const barIntensitySlider = document.getElementById('barIntensitySlider');
-        const waveIntensitySlider = document.getElementById('waveIntensitySlider');
-        const triangleSizeSlider = document.getElementById('triangleSizeSlider');
-        const innerTriangleColorSelect = document.getElementById('innerTriangleColorSelect');
-        const outerTriangleColorSelect = document.getElementById('outerTriangleColorSelect');
-        const resetDefaultsButton = document.getElementById('resetDefaultsButton');
-        const addSongsButton = document.getElementById('addSongsButton');
+  if (currentUrl === newTabPageUrl) {
+    const audioPlayer = document.getElementById('audioPlayer');
+    const canvas = document.getElementById('audioSpectrumCanvas');
+    const ctx = canvas.getContext('2d');
 
-        let audioContext;
-        let analyser;
-        let source;
-        let isPlaying = false;
-        let dataArray; // Declarar dataArray aquí para que draw pueda verlo
+    // Elementos del Panel de Controles
+    const controlsPanel = document.getElementById('controlsPanel');
+    const openControlsButton = document.getElementById('openControlsButton');
+    const closeControlsButton = document.getElementById('closeControlsButton');
 
-        let playlist = []; // Esta playlist ahora se reconstruye en cada sesión
-        // Ya no necesitamos persistedFileHandles globalmente para persistencia
+    // Controles del Reproductor de Música
+    const togglePlayPauseButton = document.getElementById('togglePlayPauseButton');
+    const prevSongButton = document.getElementById('prevSongButton');
+    const nextSongButton = document.getElementById('nextSongButton');
+    const volumeSliderInline = document.getElementById('volumeSliderInline');
 
-        const defaultSettings = {
-            volume: 0.5,
-            barColor: 'dynamic',
-            waveLineColor: 'dynamic', 
-            intensity: 1,
-            barIntensity: 1,
-            waveIntensity: 1,
-            triangleSize: 1,
-            innerTriangleColor: 'white',
-            outerTriangleColor: 'yellow',
-            visualizerType: ['all'],
-            currentSongIndex: 0,
-            defaultPlaylistUrls: [
-                chrome.runtime.getURL('sound/audio/eru.mp3'), 
-                chrome.runtime.getURL('sound/audio/gerbera.mp3'),  
-                chrome.runtime.getURL('sound/audio/MEGITSUNE.mp3'),
-                chrome.runtime.getURL('sound/audio/Odo.mp3'),
-                chrome.runtime.getURL('sound/audio/AI.mp3')
-            ]
-        };
-
-        let currentBarColor = defaultSettings.barColor;
-        let currentWaveLineColor = defaultSettings.waveLineColor; 
-        let currentIntensity = defaultSettings.intensity;
-        let currentBarIntensity = defaultSettings.barIntensity;
-        let currentWaveIntensity = defaultSettings.waveIntensity;
-        let currentTriangleSize = defaultSettings.triangleSize;
-        let currentInnerTriangleColor = defaultSettings.innerTriangleColor;
-        let currentOuterTriangleColor = defaultSettings.outerTriangleColor;
-        let currentVisualizerTypes = defaultSettings.visualizerType;
-        let currentSongIndex = defaultSettings.currentSongIndex;
-
-        const setCanvasDimensions = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        };
-        setCanvasDimensions();
-        window.addEventListener('resize', setCanvasDimensions);
-
-        // --- Función DRAW: Debe estar definida antes de que se llame ---
-        const draw = () => {
-            // Si el audio no está reproduciéndose y no hay un analizador activo, simplemente limpia el canvas.
-            if (!isPlaying && (!analyser || !audioContext)) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                return;
-            }
-
-            // Si está reproduciendo y el analizador no está inicializado, intenta inicializarlo.
-            if (isPlaying && !analyser) {
-                initAudio();
-                if (!analyser) { // Si aún no se pudo inicializar (ej. sin audioContext), no dibujes y sal.
-                    requestAnimationFrame(draw); // Sigue intentando en el siguiente frame
-                    return;
-                }
-            }
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const totalHeight = canvas.height;
-            const totalWidth = canvas.width;
-
-            // Asegúrate de que dataArray esté lleno antes de usarlo para dibujar
-            if (analyser && isPlaying) {
-                analyser.getByteFrequencyData(dataArray);
-            } else {
-                // Si no hay audio reproduciéndose, dataArray podría estar vacío o con ceros.
-                // Podrías opcionalmente llenar dataArray con ceros para un visualizador estático sin sonido.
-                dataArray = dataArray || new Uint8Array(analyser ? analyser.frequencyBinCount : 0); // Asegura que existe y tiene tamaño
-                dataArray.fill(0); // Llénalo de ceros si no hay audio
-            }
+    // Nuevo: Elementos para la Selección de Canciones y la Barra de Progreso
+    const songSelect = document.getElementById('songSelect');
+    const songProgressBar = document.getElementById('songProgressBar');
+    const currentTimeSpan = document.getElementById('currentTime');
+    const totalTimeSpan = document.getElementById('totalTime');
 
 
-            const drawAll = currentVisualizerTypes.includes('all');
-            const drawBars = drawAll || currentVisualizerTypes.includes('bars');
-            const drawWavy = drawAll || currentVisualizerTypes.includes('wavy'); 
-            const drawTriangles = drawAll || currentVisualizerTypes.includes('triangles');
+    // Configuraciones del Canvas
+    const barColorSelect = document.getElementById('barColorSelect');
+    const waveLineColorSelect = document.getElementById('waveLineColorSelect');
+    const pokerChipColorSelect = document.getElementById('pokerChipColorSelect');
+    const intensitySlider = document.getElementById('intensitySlider');
+    const visualizerTypeSelect = document.getElementById('visualizerTypeSelect');
 
-            if (drawBars) {
-                const barWidth = (canvas.width / dataArray.length) * 2.5;
-                let xBar = 0;
-                for (let i = 0; i < dataArray.length; i++) {
-                    const barHeight = dataArray[i] * 0.5 * currentIntensity * currentBarIntensity;
-                    const intensity = dataArray[i] / 255;
-                    let hue;
-                    switch (currentBarColor) {
-                        case 'blue': hue = 200; break;
-                        case 'green': hue = 120; break;
-                        case 'red': hue = 0; break;
-                        case 'purple': hue = 270; break;
-                        case 'orange': hue = 30; break;
-                        case 'cyan': hue = 180; break;
-                        case 'magenta': hue = 300; break;
-                        case 'yellow': hue = 60; break;
-                        case 'dynamic':
-                        default:
-                            if (intensity < 0.70) { hue = 200; }
-                            else if (intensity < 0.75) { hue = 60; }
-                            else { hue = 0; }
-                            break;
-                    }
-                    const saturation = 70 + (intensity * 30);
-                    const lightness = 30 + (intensity * 40);
-                    ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                    ctx.fillRect(xBar, totalHeight - barHeight, barWidth, barHeight);
-                    if (i % 5 === 0 && barHeight > 10) {
-                        const reflectiveHeight = barHeight * 0.1;
-                        ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.3})`;
-                        ctx.fillRect(xBar, totalHeight - barHeight - reflectiveHeight, barWidth, reflectiveHeight);
-                    }
-                    xBar += barWidth + 0.1;
-                }
-            }
-            if (drawTriangles && dataArray[10] > 10) {
-                if (isNaN(currentTriangleSize) || !isFinite(currentTriangleSize)) {
-                    console.warn("Se detectó un currentTriangleSize inválido, restableciendo al valor por defecto.");
-                    currentTriangleSize = defaultSettings.triangleSize;
-                    triangleSizeSlider.value = currentTriangleSize;
-                    saveSetting('triangleSize', currentTriangleSize);
-                }
-                const overallIntensity = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length / 255;
-                const size = (200 + (overallIntensity * 300 * currentIntensity)) * currentTriangleSize;
-                const alpha = 0.1 + (overallIntensity * 0.4);
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
-                const outerColor = getTriangleColor(currentOuterTriangleColor, alpha);
-                const innerColor = getTriangleColor(currentInnerTriangleColor, alpha * 1.5);
+    // Controles individuales de Intensidad
+    const barIntensitySlider = document.getElementById('barIntensitySlider');
+    const waveIntensitySlider = document.getElementById('waveIntensitySlider');
+    const triangleSizeSlider = document.getElementById('triangleSizeSlider');
 
-                ctx.save();
-                ctx.translate(centerX, centerY);
-                ctx.rotate(Math.PI);
+    // Selectores de color de Triángulo
+    const innerTriangleColorSelect = document.getElementById('innerTriangleColorSelect');
+    const outerTriangleColorSelect = document.getElementById('outerTriangleColorSelect');
 
-                ctx.beginPath();
-                ctx.moveTo(0, -size / 2);
-                ctx.lineTo(size / 2 * Math.sqrt(3) / 2, size / 2 / 2);
-                ctx.lineTo(-size / 2 * Math.sqrt(3) / 2, size / 2 / 2);
-                ctx.closePath();
-                ctx.fillStyle = outerColor;
-                ctx.fill();
+    // Nuevo: Botón de Reinicio
+    const resetDefaultsButton = document.getElementById('resetDefaultsButton');
 
-                const innerSize = size * 0.5;
-                ctx.beginPath();
-                ctx.moveTo(0, -innerSize / 2);
-                ctx.lineTo(innerSize / 2 * Math.sqrt(3) / 2, innerSize / 2 / 2);
-                ctx.lineTo(-innerSize / 2 * Math.sqrt(3) / 2, innerSize / 2 / 2);
-                ctx.closePath();
-                ctx.fillStyle = innerColor;
-                ctx.fill();
+    let audioContext;
+    let analyser;
+    let source;
+    let isPlaying = false;
 
-                ctx.restore();
-            }
+    // --- Definir Configuraciones por Defecto ---
+    const defaultSettings = {
+      volume: 0.5,
+      barColor: 'dynamic',
+      waveLineColor: 'dynamic',
+      pokerChipColor: 'random',
+      intensity: 1,
+      barIntensity: 1,
+      waveIntensity: 1,
+      triangleSize: 1,
+      innerTriangleColor: 'white',
+      outerTriangleColor: 'yellow',
+      visualizerType: ['all'],
+      currentSongIndex: 0
+    };
 
-            if (drawWavy) {
-                let waveHue;
-                let strokeStyleValue;
-                switch (currentWaveLineColor) {
-                    case 'white': strokeStyleValue = 'rgba(255, 255, 255, 0.7)'; break;
-                    case 'orange': waveHue = 30; strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`; break;
-                    case 'pink': waveHue = 330; strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`; break;
-                    case 'red': waveHue = 0; strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`; break;
-                    case 'green': waveHue = 120; strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`; break;
-                    case 'blue': waveHue = 240; strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`; break;
-                    case 'yellow': waveHue = 60; strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`; break;
-                    case 'purple': waveHue = 270; strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`; break;
-                    case 'cyan': waveHue = 180; strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`; break;
-                    case 'magenta': waveHue = 300; strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`; break;
-                    case 'dynamic':
-                    default:
-                        const averageFrequency = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
-                        waveHue = 200 + (averageFrequency / 255) * 50;
-                        strokeStyleValue = `hsl(${waveHue}, 70%, 60%, 0.7)`;
-                        break;
-                }
-                ctx.lineWidth = 4 * currentIntensity * currentWaveIntensity;
-                ctx.strokeStyle = strokeStyleValue;
-                ctx.beginPath();
-                const sliceWidth = canvas.width * 2.0 / dataArray.length;
-                let lineX = 0;
+    // --- Configuraciones guardadas para el canvas y la música (valores por defecto) ---
+    let currentBarColor = defaultSettings.barColor;
+    let currentWaveLineColor = defaultSettings.waveLineColor;
+    let currentPokerChipColor = defaultSettings.pokerChipColor;
+    let currentIntensity = defaultSettings.intensity;
+    let currentBarIntensity = defaultSettings.barIntensity;
+    let currentWaveIntensity = defaultSettings.waveIntensity;
+    let currentTriangleSize = defaultSettings.triangleSize;
+    let currentInnerTriangleColor = defaultSettings.innerTriangleColor;
+    let currentOuterTriangleColor = defaultSettings.outerTriangleColor;
+    let currentVisualizerTypes = defaultSettings.visualizerType;
 
-                for (let i = 0; i < dataArray.length; i++) {
-                    const v = dataArray[i] / 128.0;
-                    const y = (v * canvas.height / 1);
+    // --- Lista de Reproducción ---
+    const playlist = [
+      'audio/eru ∇.mp3',
+      'audio/gerbera .mp3',
+      'audio/MEGITSUNE.mp3',
+      'audio/Odo.mp3',
+      'audio/AI.mp3'
+    ];
+    let currentSongIndex = defaultSettings.currentSongIndex;
 
-                    if (i === 0) {
-                        ctx.moveTo(lineX, y);
-                    } else {
-                        ctx.lineTo(lineX, y);
-                    }
-                    lineX += sliceWidth;
-                }
-                ctx.lineTo(canvas.width, canvas.height / 2);
-                ctx.stroke();
-            }
+    // Establece las dimensiones del canvas a pantalla completa
+    const setCanvasDimensions = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    setCanvasDimensions();
+    window.addEventListener('resize', setCanvasDimensions);
 
-             
+    // --- Función para enviar mensaje al script de fondo para guardar una configuración ---
+    const saveSetting = (key, value) => {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({
+          action: 'saveSetting',
+          data: {
+            key: key,
+            value: value
+          }
+        });
+      } else {
+        console.warn("chrome.runtime.sendMessage no está disponible. La configuración no se guardará de forma persistente.");
+      }
+    };
 
-            // SOLO SOLICITA EL SIGUIENTE FRAME SI ESTÁ REPRODUCIÉNDOSE
-            if (isPlaying) {
-                requestAnimationFrame(draw);
-            }
-        };
-        // --- FIN de la función DRAW ---
+    // --- Rellena el selector de canciones ---
+    const populateSongSelect = () => {
+      songSelect.innerHTML = ''; // Limpia las opciones existentes
+      playlist.forEach((songPath, index) => {
+        const option = document.createElement('option');
+        // Extrae el nombre de la canción de la ruta (ej. "eru ∇.mp3" de "audio/eru ∇.mp3")
+        const songName = songPath.split('/').pop().replace('.mp3', '');
+        option.value = index;
+        option.textContent = songName;
+        songSelect.appendChild(option);
+      });
+      songSelect.value = currentSongIndex; // Establece la selección inicial
+    };
 
-        const saveSetting = (key, value) => {
-            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-                chrome.runtime.sendMessage({
-                    action: 'saveSetting',
-                    data: { key: key, value: value }
-                });
-            } else {
-                console.warn("chrome.runtime.sendMessage no está disponible. La configuración no se guardará de forma persistente.");
-            }
-        };
 
-        // --- populateSongSelect: Ahora recibe handles para la sesión actual ---
-        const populateSongSelect = (currentSessionHandles = []) => {
-            songSelect.innerHTML = '';
+    // --- Carga las configuraciones guardadas y las aplica ---
+    const loadSettings = () => {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({
+          action: 'loadSettings'
+        }, (result) => {
+          audioPlayer.volume = result.volume !== undefined ? result.volume : defaultSettings.volume;
+          volumeSliderInline.value = audioPlayer.volume;
 
-            // La playlist siempre incluye las URLs predeterminadas y las canciones de la sesión actual
-            playlist = [
-                ...defaultSettings.defaultPlaylistUrls,
-                ...currentSessionHandles.map(item => item.handle)
-            ];
+          currentBarColor = result.barColor || defaultSettings.barColor;
+          barColorSelect.value = currentBarColor;
 
-            if (playlist.length === 0) {
-                const option = document.createElement('option');
-                option.textContent = "No hay canciones en la lista";
-                option.disabled = true;
-                songSelect.appendChild(option);
-                togglePlayPauseButton.disabled = true;
-                prevSongButton.disabled = true;
-                nextSongButton.disabled = true;
-                return;
-            } else {
-                togglePlayPauseButton.disabled = false;
-                prevSongButton.disabled = false;
-                nextSongButton.disabled = false;
-            }
+          currentWaveLineColor = result.waveLineColor || defaultSettings.waveLineColor;
+          waveLineColorSelect.value = currentWaveLineColor;
 
-            playlist.forEach((songItem, index) => {
-                const option = document.createElement('option');
-                let songName;
-                if (typeof songItem === 'string') {
-                    songName = songItem.split('/').pop().replace('.mp3', '');
-                } else if (songItem && typeof songItem === 'object' && songItem.kind === 'file' && songItem.name) {
-                    songName = songItem.name.replace('.mp3', '');
-                } else {
-                    songName = `Canción #${index + 1}`;
-                }
-                option.value = index;
-                option.textContent = songName;
-                songSelect.appendChild(option);
-            });
-            songSelect.value = currentSongIndex;
-        };
+          currentPokerChipColor = result.pokerChipColor || defaultSettings.pokerChipColor;
+          pokerChipColorSelect.value = currentPokerChipColor;
 
-        const loadSettings = async () => {
-            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-                chrome.runtime.sendMessage({ action: 'loadSettings' }, async (result) => {
-                    audioPlayer.volume = result.volume !== undefined ? result.volume : defaultSettings.volume;
-                    volumeSliderInline.value = audioPlayer.volume;
-                    currentBarColor = result.barColor || defaultSettings.barColor;
-                    barColorSelect.value = currentBarColor;
-                    currentWaveLineColor = result.waveLineColor || defaultSettings.waveLineColor;
-                    waveLineColorSelect.value = currentWaveLineColor;  
-                    currentIntensity = parseFloat(result.intensity) !== undefined ? parseFloat(result.intensity) : defaultSettings.intensity;
-                  
-                    currentBarIntensity = parseFloat(result.barIntensity) !== undefined ? parseFloat(result.barIntensity) : defaultSettings.barIntensity;
-                    barIntensitySlider.value = currentBarIntensity;
-                    currentWaveIntensity = parseFloat(result.waveIntensity) !== undefined ? parseFloat(result.waveIntensity) : defaultSettings.waveIntensity;
-                    waveIntensitySlider.value = currentWaveIntensity;
-                    currentTriangleSize = parseFloat(result.triangleSize) !== undefined ? parseFloat(result.triangleSize) : defaultSettings.triangleSize;
-                    triangleSizeSlider.value = currentTriangleSize;
-                    currentInnerTriangleColor = result.innerTriangleColor || defaultSettings.innerTriangleColor;
-                    innerTriangleColorSelect.value = currentInnerTriangleColor;
-                    currentOuterTriangleColor = result.outerTriangleColor || defaultSettings.outerTriangleColor;
-                    outerTriangleColorSelect.value = currentOuterTriangleColor;
-                    if (result.visualizerType) {
-                        currentVisualizerTypes = Array.isArray(result.visualizerType) ? result.visualizerType : [result.visualizerType];
-                    } else {
-                        currentVisualizerTypes = defaultSettings.visualizerType;
-                    }
-                    Array.from(visualizerTypeSelect.options).forEach(option => {
-                        option.selected = currentVisualizerTypes.includes(option.value);
-                    });
+          currentIntensity = parseFloat(result.intensity) !== undefined ? parseFloat(result.intensity) : defaultSettings.intensity;
+          intensitySlider.value = currentIntensity;
 
-                    // NO SE CARGAN HANDLES PERSISTENTES AQUÍ.
-                    // Los handles de archivos locales no pueden ser persistidos entre sesiones en Mv3 de esta forma.
+          currentBarIntensity = parseFloat(result.barIntensity) !== undefined ? parseFloat(result.barIntensity) : defaultSettings.barIntensity;
+          barIntensitySlider.value = currentBarIntensity;
 
-                    currentSongIndex = result.currentSongIndex !== undefined ? result.currentSongIndex : defaultSettings.currentSongIndex;
+          currentWaveIntensity = parseFloat(result.waveIntensity) !== undefined ? parseFloat(result.waveIntensity) : defaultSettings.waveIntensity;
+          waveIntensitySlider.value = currentWaveIntensity;
 
-                    populateSongSelect(); // Llama sin pasar handles restaurados
+          currentTriangleSize = parseFloat(result.triangleSize) !== undefined ? parseFloat(result.triangleSize) : defaultSettings.triangleSize;
+          triangleSizeSlider.value = currentTriangleSize;
 
-                    if (currentSongIndex >= playlist.length || playlist.length === 0) {
-                        currentSongIndex = 0;
-                    }
+          currentInnerTriangleColor = result.innerTriangleColor || defaultSettings.innerTriangleColor;
+          innerTriangleColorSelect.value = currentInnerTriangleColor;
 
-                    if (playlist.length > 0) {
-                        const songToLoad = playlist[currentSongIndex];
-                        const initialSongSource = await getSongSource(songToLoad);
-                        if (initialSongSource) {
-                            audioPlayer.src = initialSongSource;
-                            audioPlayer.load();
-                            togglePlayPauseButton.textContent = 'Reproducir';
-                            isPlaying = false;
-                        } else {
-                            audioPlayer.src = '';
-                            console.warn("No se pudo cargar la canción inicial. Por favor, agregue archivos locales o verifique los predeterminados.");
-                            togglePlayPauseButton.textContent = 'Reproducir';
-                            isPlaying = false;
-                        }
-                    } else {
-                         audioPlayer.src = '';
-                         togglePlayPauseButton.textContent = 'Reproducir';
-                         isPlaying = false;
-                    }
-                    draw(); // Llama a draw después de cargar las configuraciones
-                });
-            } else {
-                console.warn("chrome.runtime.sendMessage no está disponible. La configuración no se cargará de forma persistente.");
-                applySettings(defaultSettings);
-                populateSongSelect();
-                draw();
-            }
-        };
+          currentOuterTriangleColor = result.outerTriangleColor || defaultSettings.outerTriangleColor;
+          outerTriangleColorSelect.value = currentOuterTriangleColor;
 
-        const applySettings = (settings) => {
-            audioPlayer.volume = settings.volume;
-            volumeSliderInline.value = settings.volume;
-            saveSetting('volume', settings.volume);
-            currentBarColor = settings.barColor;
-            barColorSelect.value = currentBarColor;
-            saveSetting('barColor', currentBarColor);
-            currentWaveLineColor = settings.waveLineColor;
-            waveLineColorSelect.value = currentWaveLineColor;
-            saveSetting('waveLineColor', currentWaveLineColor);   
-            currentIntensity = settings.intensity; 
-            saveSetting('intensity', currentIntensity);
-            currentBarIntensity = settings.barIntensity;
-            barIntensitySlider.value = currentBarIntensity;
-            saveSetting('barIntensity', currentBarIntensity);
-            currentWaveIntensity = settings.waveIntensity;
-            waveIntensitySlider.value = currentWaveIntensity;
-            saveSetting('waveIntensity', currentWaveIntensity);
-            currentTriangleSize = settings.triangleSize;
-            triangleSizeSlider.value = currentTriangleSize;
-            saveSetting('triangleSize', currentTriangleSize);
-            currentInnerTriangleColor = settings.innerTriangleColor;
-            innerTriangleColorSelect.value = currentInnerTriangleColor;
-            saveSetting('innerTriangleColor', currentInnerTriangleColor);
-            currentOuterTriangleColor = settings.outerTriangleColor;
-            outerTriangleColorSelect.value = currentOuterTriangleColor;
-            saveSetting('outerTriangleColor', currentOuterTriangleColor);
-            currentVisualizerTypes = settings.visualizerType;
-            Array.from(visualizerTypeSelect.options).forEach(option => {
-                option.selected = settings.visualizerType.includes(option.value);
-            });
-            saveSetting('visualizerType', currentVisualizerTypes);
+          if (result.visualizerType) {
+            currentVisualizerTypes = Array.isArray(result.visualizerType) ? result.visualizerType : [result.visualizerType];
+          } else {
+            currentVisualizerTypes = defaultSettings.visualizerType;
+          }
+          Array.from(visualizerTypeSelect.options).forEach(option => {
+            option.selected = currentVisualizerTypes.includes(option.value);
+          });
 
-            // Ya no hay persistencia de handles, así que no se necesita savePlaylistHandles
-            // Limpia la playlist actual si estás "reseteando"
-            populateSongSelect([]); // Reinicia la playlist solo con las canciones por defecto
+          currentSongIndex = result.currentSongIndex !== undefined ? result.currentSongIndex : defaultSettings.currentSongIndex;
+          if (playlist[currentSongIndex]) {
+            audioPlayer.src = playlist[currentSongIndex];
+          }
+          populateSongSelect(); // Rellenar después de cargar currentSongIndex
 
-            currentSongIndex = 0;
-            if (defaultSettings.defaultPlaylistUrls.length > 0) {
-                audioPlayer.src = defaultSettings.defaultPlaylistUrls[currentSongIndex];
-                audioPlayer.load();
-            } else {
-                audioPlayer.src = '';
-            }
+          draw();
+        });
+      } else {
+        console.warn("chrome.runtime.sendMessage no está disponible. La configuración no se cargará de forma persistente.");
+        applySettings(defaultSettings);
+        populateSongSelect(); // Rellenar incluso si la configuración no está cargada
+        draw();
+      }
+    };
+
+    // --- Función para aplicar configuraciones a los controles y variables ---
+    const applySettings = (settings) => {
+      audioPlayer.volume = settings.volume;
+      volumeSliderInline.value = settings.volume;
+      saveSetting('volume', settings.volume);
+
+      currentBarColor = settings.barColor;
+      barColorSelect.value = settings.barColor;
+      saveSetting('barColor', settings.barColor);
+
+      currentWaveLineColor = settings.waveLineColor;
+      waveLineColorSelect.value = settings.waveLineColor;
+      saveSetting('waveLineColor', settings.waveLineColor);
+
+      currentPokerChipColor = settings.pokerChipColor;
+      pokerChipColorSelect.value = settings.pokerChipColor;
+      saveSetting('pokerChipColor', settings.pokerChipColor);
+
+      currentIntensity = settings.intensity;
+      intensitySlider.value = settings.intensity;
+      saveSetting('intensity', currentIntensity);
+
+      currentBarIntensity = settings.barIntensity;
+      barIntensitySlider.value = settings.barIntensity;
+      saveSetting('barIntensity', currentBarIntensity);
+
+      currentWaveIntensity = settings.waveIntensity;
+      waveIntensitySlider.value = settings.waveIntensity;
+      saveSetting('waveIntensity', currentWaveIntensity);
+
+      currentTriangleSize = settings.triangleSize;
+      triangleSizeSlider.value = settings.triangleSize;
+      saveSetting('triangleSize', currentTriangleSize);
+
+      currentInnerTriangleColor = settings.innerTriangleColor;
+      innerTriangleColorSelect.value = settings.innerTriangleColor;
+      saveSetting('innerTriangleColor', settings.innerTriangleColor);
+
+      currentOuterTriangleColor = settings.outerTriangleColor;
+      outerTriangleColorSelect.value = settings.outerTriangleColor;
+      saveSetting('outerTriangleColor', settings.outerTriangleColor);
+
+
+      currentVisualizerTypes = settings.visualizerType;
+      Array.from(visualizerTypeSelect.options).forEach(option => {
+        option.selected = settings.visualizerType.includes(option.value);
+      });
+      saveSetting('visualizerType', currentVisualizerTypes);
+
+      currentSongIndex = settings.currentSongIndex;
+      if (playlist[currentSongIndex]) {
+        audioPlayer.src = playlist[currentSongIndex];
+      }
+      saveSetting('currentSongIndex', currentSongIndex);
+      populateSongSelect(); // Actualiza el selector después de aplicar la configuración
+
+      draw();
+    };
+
+    // --- Función para reiniciar todas las configuraciones a sus valores por defecto ---
+    const resetSettings = () => {
+      applySettings(defaultSettings);
+      if (isPlaying) {
+        audioPlayer.pause();
+        isPlaying = false;
+        togglePlayPauseButton.textContent = 'Reproducir';
+      }
+      console.log("Todas las configuraciones se han restablecido a sus valores por defecto.");
+    };
+
+    let dataArray;
+
+    const pokerChips = [];
+    const MAX_POKER_CHIPS = 5;
+
+    // --- Inicialización de la API de Web Audio ---
+    const initAudio = () => {
+      if (!audioContext) {
+        audioContext = new(window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        source = audioContext.createMediaElementSource(audioPlayer);
+
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+
+        analyser.fftSize = 256;
+        analyser.minDecibels = -90;
+        analyser.maxDecibels = -10;
+        analyser.smoothingTimeConstant = 0.85;
+
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+      }
+    };
+
+    // --- Funciones del Reproductor de Música ---
+    const playCurrentOrNextSong = () => {
+      initAudio();
+      if (!audioPlayer.src || audioPlayer.src === window.location.href) {
+        if (playlist[currentSongIndex]) {
+          audioPlayer.src = playlist[currentSongIndex];
+        } else {
+          console.error("No hay fuente de audio disponible en la lista de reproducción.");
+          return;
+        }
+      }
+
+      if (audioPlayer.paused) {
+        audioPlayer.play()
+          .then(() => {
+            isPlaying = true;
+            togglePlayPauseButton.textContent = 'Reproduciendo...';
             saveSetting('currentSongIndex', currentSongIndex);
-
-            // populateSongSelect ya se llamó
             draw();
-            audioPlayer.pause();
-            isPlaying = false;
+          })
+          .catch(error => {
+            console.error("Error al reproducir audio:", error);
             togglePlayPauseButton.textContent = 'Reproducir';
-        };
+          });
+      } else {
+        audioPlayer.pause();
+        isPlaying = false;
+        togglePlayPauseButton.textContent = 'En Pausa';
+      }
+    };
 
-        const resetSettings = () => {
-            applySettings(defaultSettings);
-            console.log("Todas las configuraciones se han restablecido a sus valores por defecto.");
-        };
-
-        const initAudio = () => {
-            if (!audioContext) {
-                audioContext = new(window.AudioContext || window.webkitAudioContext)();
-                analyser = audioContext.createAnalyser();
-                source = audioContext.createMediaElementSource(audioPlayer);
-                source.connect(analyser);
-                analyser.connect(audioContext.destination);
-                analyser.fftSize = 256;
-                analyser.minDecibels = -90;
-                analyser.maxDecibels = -10;
-                analyser.smoothingTimeConstant = 0.85;
-                dataArray = new Uint8Array(analyser.frequencyBinCount); // Inicializa dataArray aquí
-            }
-        };
-
-        const getSongSource = async (songItem) => {
-            if (typeof songItem === 'string') {
-                return songItem;
-            } else if (songItem && typeof songItem === 'object' && songItem.kind === 'file' && songItem.getFile) {
-                try {
-                    const permissionStatus = await songItem.queryPermission({ mode: 'read' });
-                    if (permissionStatus === 'denied') {
-                        alert(`El permiso para leer el archivo "${songItem.name}" ha sido denegado. No se puede reproducir.`);
-                        return null;
-                    }
-                    if (permissionStatus === 'prompt') {
-                        const newPermissionStatus = await songItem.requestPermission({ mode: 'read' });
-                        if (newPermissionStatus !== 'granted') {
-                            alert(`Se requiere su permiso para reproducir "${songItem.name}". Permiso denegado.`);
-                            return null;
-                        }
-                    }
-                    const file = await songItem.getFile();
-                    return URL.createObjectURL(file);
-                } catch (error) {
-                    console.error("Error al obtener el archivo del handle:", error);
-                    alert(`Error al acceder al archivo "${songItem.name}". Puede que el archivo ya no exista o los permisos sean insuficientes.`);
-                    return null;
-                }
-            } else {
-                console.error("Tipo de canción no soportado en la playlist:", songItem);
-                return null;
-            }
-        };
-
-        const playCurrentOrNextSong = async () => {
-            if (playlist.length === 0) {
-                console.warn("No hay canciones en la lista de reproducción.");
-                return;
-            }
-            initAudio();
-
-            if (audioPlayer.paused) {
-                const currentSongItem = playlist[currentSongIndex];
-                const songSource = await getSongSource(currentSongItem);
-
-                if (!songSource) {
-                    console.warn("No se pudo obtener la fuente de la canción actual. No se puede reproducir.");
-                    togglePlayPauseButton.textContent = 'Reproducir';
-                    isPlaying = false;
-                    return;
-                }
-
-                if (audioPlayer.src !== songSource) {
-                    if (audioPlayer.src && audioPlayer.src.startsWith('blob:')) {
-                        URL.revokeObjectURL(audioPlayer.src);
-                    }
-                    audioPlayer.src = songSource;
-                    audioPlayer.load();
-                }
-
-                audioPlayer.play()
-                    .then(() => {
-                        isPlaying = true;
-                        togglePlayPauseButton.textContent = 'En Pausa';
-                        saveSetting('currentSongIndex', currentSongIndex);
-                        draw();
-                    })
-                    .catch(error => {
-                        console.error("Error al reproducir audio:", error);
-                        togglePlayPauseButton.textContent = 'Reproducir';
-                        isPlaying = false;
-                        if (error.name === 'NotAllowedError' || error.name === 'AbortError') {
-                             alert("Se necesita interacción del usuario para reproducir audio. Haz clic en el botón de reproducción.");
-                        }
-                    });
-            } else {
-                audioPlayer.pause();
-                isPlaying = false;
-                togglePlayPauseButton.textContent = 'Reproducir';
-            }
-        };
-
-        const playSpecificSong = async (index) => {
-            if (index < 0 || index >= playlist.length) {
-                console.error(`Índice de canción inválido: ${index}`);
-                return;
-            }
-            initAudio();
-            const newSongItem = playlist[index];
-            const newSongSource = await getSongSource(newSongItem);
-
-            if (!newSongSource) {
-                console.warn("No se pudo obtener la fuente de la canción específica. No se reproduce.");
-                togglePlayPauseButton.textContent = 'Reproducir';
-                isPlaying = false;
-                return;
-            }
-
-            if (audioPlayer.src && audioPlayer.src.startsWith('blob:')) {
-                URL.revokeObjectURL(audioPlayer.src);
-            }
-
-            audioPlayer.src = newSongSource;
-            audioPlayer.load();
-
-            audioPlayer.play()
-                .then(() => {
-                    isPlaying = true;
-                    currentSongIndex = index;
-                    togglePlayPauseButton.textContent = 'En Pausa';
-                    saveSetting('currentSongIndex', currentSongIndex);
-                    songSelect.value = currentSongIndex;
-                    draw();
-                })
-                .catch(error => {
-                    console.error("Error al reproducir canción específica:", error);
-                    togglePlayPauseButton.textContent = 'Reproducir';
-                    isPlaying = false;
-                     if (error.name === 'NotAllowedError' || error.name === 'AbortError') {
-                             alert("Se necesita interacción del usuario para reproducir audio. Haz clic en el botón de reproducción.");
-                        }
-                });
-        };
-
-        const playNextSong = () => {
-            if (playlist.length === 0) return;
-            if (playlist.length === 1 && audioPlayer.ended) {
-                audioPlayer.currentTime = 0;
-                isPlaying = false;
-                togglePlayPauseButton.textContent = 'Reproducir';
-                return;
-            }
-            currentSongIndex = (currentSongIndex + 1) % playlist.length;
-            playSpecificSong(currentSongIndex);
-        };
-
-        const playPreviousSong = () => {
-            if (playlist.length === 0) return;
-            currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
-            playSpecificSong(currentSongIndex);
-        };
-
-        const getTriangleColor = (colorName, alpha) => {
-            switch (colorName) {
-                case 'red': return `rgba(255, 0, 0, ${alpha})`;
-                case 'green': return `rgba(0, 255, 0, ${alpha})`;
-                case 'blue': return `rgba(0, 0, 255, ${alpha})`;
-                case 'yellow': return `rgba(255, 255, 0, ${alpha})`;
-                case 'purple': return `rgba(128, 0, 128, ${alpha})`;
-                case 'cyan': return `rgba(0, 255, 255, ${alpha})`;
-                case 'magenta': return `rgba(255, 0, 255, ${alpha})`;
-                case 'white': return `rgba(255, 255, 255, ${alpha})`;
-                case 'black': return `rgba(0, 0, 0, ${alpha})`;
-                case 'orange': return `rgba(255, 165, 0, ${alpha})`;
-                case 'light-blue': return `rgba(173, 216, 230, ${alpha})`;
-                case 'lime': return `rgba(0, 255, 0, ${alpha})`;
-                case 'gold': return `rgba(255, 215, 0, ${alpha})`;
-                case 'silver': return `rgba(192, 192, 192, ${alpha})`;
-                case 'teal': return `rgba(0, 128, 128, ${alpha})`;
-                case 'indigo': return `rgba(75, 0, 130, ${alpha})`;
-                case 'maroon': return `rgba(128, 0, 0, ${alpha})`;
-                case 'olive': return `rgba(128, 128, 0, ${alpha})`;
-                case 'navy': return `rgba(0, 0, 128, ${alpha})`;
-                case 'pink': return `rgba(255, 192, 203, ${alpha})`;
-                case 'brown': return `rgba(165, 42, 42, ${alpha})`;
-                case 'grey': return `rgba(128, 128, 128, ${alpha})`;
-                default: return `rgba(0, 0, 255, ${alpha})`;
-            }
-        };
-
-        const formatTime = (seconds) => {
-            const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = Math.floor(seconds % 60);
-            return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
-        };
-
-        
-
-        addSongsButton.addEventListener('click', async () => {
-            try {
-                const handles = await window.showOpenFilePicker({
-                    multiple: true,
-                    types: [{
-                        description: 'Audio Files',
-                        accept: {
-                            'audio/*': ['.mp3', '.wav', '.ogg', '.aac']
-                        }
-                    }]
-                });
-
-                let newSongsAdded = false;
-                let currentSessionHandles = []; // Almacena handles para la sesión actual
-                for (const handle of handles) {
-                    const permissionStatus = await handle.requestPermission({ mode: 'read' });
-                    if (permissionStatus === 'granted') {
-                        currentSessionHandles.push({ name: handle.name, handle: handle });
-                        newSongsAdded = true;
-                    } else {
-                        console.warn(`Permiso denegado para el archivo: ${handle.name}`);
-                    }
-                }
-
-                if (newSongsAdded) {
-                    // Actualiza la playlist con las canciones por defecto Y las añadidas en esta sesión
-                    populateSongSelect(currentSessionHandles);
-                    alert("Canciones añadidas a la lista de reproducción. Tenga en cuenta que las canciones locales no se guardarán entre sesiones del navegador.");
-                    togglePlayPauseButton.textContent = 'Reproducir';
-                    isPlaying = false;
-                } else {
-                    alert("No se añadieron nuevas canciones o se denegaron los permisos.");
-                }
-
-            } catch (error) {
-                console.log("Error al seleccionar archivos con File System Access API:", error);
-                if (error.name === 'AbortError') {
-                    console.log("Selección de archivo cancelada por el usuario.");
-                } else {
-                    alert("Hubo un error al intentar añadir canciones. Asegúrate de dar los permisos necesarios.");
-                }
-            }
-        });
-
-        openControlsButton.addEventListener('click', () => {
-            controlsPanel.classList.add('open');
-        });
-        closeControlsButton.addEventListener('click', () => {
-            controlsPanel.classList.remove('open');
-        });
-        window.addEventListener('click', (event) => {
-            if (controlsPanel.classList.contains('open') &&
-                !controlsPanel.contains(event.target) &&
-                !openControlsButton.contains(event.target)) {
-                controlsPanel.classList.remove('open');
-            }
-        });
-
-        togglePlayPauseButton.addEventListener('click', playCurrentOrNextSong);
-        prevSongButton.addEventListener('click', playPreviousSong);
-        nextSongButton.addEventListener('click', playNextSong);
-
-        volumeSliderInline.addEventListener('input', () => {
-            audioPlayer.volume = volumeSliderInline.value;
-            saveSetting('volume', volumeSliderInline.value);
-        });
-
-        audioPlayer.addEventListener('ended', playNextSong);
-
-        songSelect.addEventListener('change', async (event) => {
-            const newIndex = parseInt(event.target.value, 10);
-            if (newIndex !== currentSongIndex) {
-                currentSongIndex = newIndex;
-                saveSetting('currentSongIndex', currentSongIndex);
-
-                const songToLoad = playlist[currentSongIndex];
-                const newSongSource = await getSongSource(songToLoad);
-
-                if (newSongSource) {
-                    if (audioPlayer.src && audioPlayer.src.startsWith('blob:')) {
-                        URL.revokeObjectURL(audioPlayer.src);
-                    }
-                    audioPlayer.src = newSongSource;
-                    audioPlayer.load();
-
-                    if (isPlaying) {
-                        audioPlayer.play()
-                            .catch(error => {
-                                console.error("Error al reproducir tras cambiar de canción:", error);
-                                togglePlayPauseButton.textContent = 'Reproducir';
-                                isPlaying = false;
-                                if (error.name === 'NotAllowedError' || error.name === 'AbortError') {
-                                     alert("Se necesita interacción del usuario para reproducir audio. Haz clic en el botón de reproducción.");
-                                }
-                            });
-                    } else {
-                         togglePlayPauseButton.textContent = 'Reproducir';
-                    }
-                } else {
-                    audioPlayer.src = '';
-                    console.warn("No se pudo cargar la canción seleccionada.");
-                    togglePlayPauseButton.textContent = 'Reproducir';
-                    isPlaying = false;
-                }
-            }
-        });
-
-        audioPlayer.addEventListener('timeupdate', () => {
-            songProgressBar.value = audioPlayer.currentTime;
-            currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
-        });
-
-        audioPlayer.addEventListener('loadedmetadata', () => {
-            songProgressBar.max = audioPlayer.duration;
-            totalTimeSpan.textContent = formatTime(audioPlayer.duration);
-            currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
-        });
-
-        songProgressBar.addEventListener('input', () => {
-            audioPlayer.currentTime = songProgressBar.value;
-        });
-
-        barColorSelect.addEventListener('change', () => {
-            currentBarColor = barColorSelect.value;
-            saveSetting('barColor', currentBarColor);
+    const playSpecificSong = (index) => {
+      initAudio();
+      if (playlist[index]) {
+        audioPlayer.src = playlist[index];
+        audioPlayer.play()
+          .then(() => {
+            isPlaying = true;
+            currentSongIndex = index;
+            togglePlayPauseButton.textContent = 'Reproduciendo...';
+            saveSetting('currentSongIndex', currentSongIndex);
+            songSelect.value = currentSongIndex; // Actualiza el selector
             draw();
-        });
+          })
+          .catch(error => {
+            console.error("Error al reproducir canción específica:", error);
+            togglePlayPauseButton.textContent = 'Reproducir';
+          });
+      } else {
+        console.error(`Canción en el índice ${index} no encontrada en la lista de reproducción.`);
+      }
+    };
 
-        waveLineColorSelect.addEventListener('change', () => {
-            currentWaveLineColor = waveLineColorSelect.value;
-            saveSetting('waveLineColor', currentWaveLineColor);
-            draw();
-        });
- 
+    const playNextSong = () => {
+      currentSongIndex = (currentSongIndex + 1) % playlist.length;
+      playSpecificSong(currentSongIndex);
+    };
 
-        
+    const playPreviousSong = () => {
+      currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+      playSpecificSong(currentSongIndex);
+    };
 
-        barIntensitySlider.addEventListener('input', () => {
-            currentBarIntensity = parseFloat(barIntensitySlider.value);
-            saveSetting('barIntensity', currentBarIntensity);
-            draw();
-        });
+    // Ayudante para obtener el color RGBA basado en la entrada de cadena
+    const getTriangleColor = (colorName, alpha) => {
+      switch (colorName) {
+        case 'red':
+          return `rgba(255, 0, 0, ${alpha})`;
+        case 'green':
+          return `rgba(0, 255, 0, ${alpha})`;
+        case 'blue':
+          return `rgba(0, 0, 255, ${alpha})`;
+        case 'yellow':
+          return `rgba(255, 255, 0, ${alpha})`;
+        case 'purple':
+          return `rgba(128, 0, 128, ${alpha})`;
+        case 'cyan':
+          return `rgba(0, 255, 255, ${alpha})`;
+        case 'magenta':
+          return `rgba(255, 0, 255, ${alpha})`;
+        case 'white':
+          return `rgba(255, 255, 255, ${alpha})`;
+        case 'black':
+          return `rgba(0, 0, 0, ${alpha})`;
+        case 'orange':
+          return `rgba(255, 165, 0, ${alpha})`;
+        case 'light-blue':
+          return `rgba(173, 216, 230, ${alpha})`; // Azul claro
+        case 'lime':
+          return `rgba(0, 255, 0, ${alpha})`; // Verde lima
+        case 'gold':
+          return `rgba(255, 215, 0, ${alpha})`; // Oro
+        case 'silver':
+          return `rgba(192, 192, 192, ${alpha})`; // Plata
+        case 'teal':
+          return `rgba(0, 128, 128, ${alpha})`; // Verde azulado
+        case 'indigo':
+          return `rgba(75, 0, 130, ${alpha})`; // Índigo
+        case 'maroon':
+          return `rgba(128, 0, 0, ${alpha})`; // Granate
+        case 'olive':
+          return `rgba(128, 128, 0, ${alpha})`; // Oliva
+        case 'navy':
+          return `rgba(0, 0, 128, ${alpha})`; // Azul marino
+        case 'pink':
+          return `rgba(255, 192, 203, ${alpha})`; // Rosa
+        case 'brown':
+          return `rgba(165, 42, 42, ${alpha})`; // Marrón
+        case 'grey':
+          return `rgba(128, 128, 128, ${alpha})`; // Gris
+        default:
+          return `rgba(0, 0, 255, ${alpha})`; // Por defecto azul
+      }
+    };
 
-        waveIntensitySlider.addEventListener('input', () => {
-            currentWaveIntensity = parseFloat(waveIntensitySlider.value);
-            saveSetting('waveIntensity', currentWaveIntensity);
-            draw();
-        });
+    // --- Función auxiliar para formatear el tiempo (ej. 1:23) ---
+    const formatTime = (seconds) => {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = Math.floor(seconds % 60);
+      return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+    };
 
-        triangleSizeSlider.addEventListener('input', () => {
-            currentTriangleSize = parseFloat(triangleSizeSlider.value);
-            saveSetting('triangleSize', currentTriangleSize);
-            draw();
-        });
 
-        innerTriangleColorSelect.addEventListener('change', () => {
-            currentInnerTriangleColor = innerTriangleColorSelect.value;
-            saveSetting('innerTriangleColor', currentInnerTriangleColor);
-            draw();
-        });
+    // --- Función de Dibujo ---
+    const draw = () => {
+      if (isPlaying && analyser) {
+        requestAnimationFrame(draw);
+        analyser.getByteFrequencyData(dataArray);
+      } else if (!isPlaying && !analyser && audioContext) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      } else if (!isPlaying && !audioContext) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
 
-        outerTriangleColorSelect.addEventListener('change', () => {
-            currentOuterTriangleColor = outerTriangleColorSelect.value;
-            saveSetting('outerTriangleColor', currentOuterTriangleColor);
-            draw();
-        });
+      if (!analyser && audioContext) {
+        initAudio();
+        if (!analyser) {
+          requestAnimationFrame(draw);
+          return;
+        }
+      } else if (!analyser && !audioContext) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
 
-        visualizerTypeSelect.addEventListener('change', () => {
-            currentVisualizerTypes = Array.from(visualizerTypeSelect.selectedOptions).map(option => option.value);
-            if (currentVisualizerTypes.includes('all')) {
-                currentVisualizerTypes = ['all'];
-                Array.from(visualizerTypeSelect.options).forEach(option => {
-                    option.selected = (option.value === 'all');
-                });
-            }
-            saveSetting('visualizerType', currentVisualizerTypes);
-            draw();
-        });
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const totalHeight = canvas.height;
+      const totalWidth = canvas.width;
 
-        resetDefaultsButton.addEventListener('click', () => {
-            resetSettings();
-        });
+      // Determina qué visualizadores dibujar
+      const drawAll = currentVisualizerTypes.includes('all');
+      const drawBars = drawAll || currentVisualizerTypes.includes('bars');
+      const drawWavy = drawAll || currentVisualizerTypes.includes('wavy');
+      const drawChips = drawAll || currentVisualizerTypes.includes('chips');
+      const drawTriangles = drawAll || currentVisualizerTypes.includes('triangles');
 
-        loadSettings(); // Cargar settings al inicio
-    } else {
-        console.log("No estás en la página de inicio de la extensión.");
+
+      // Visualizador 1: Barras
+      if (drawBars) {
+        const barWidth = (canvas.width / dataArray.length) * 2.5;
+        let xBar = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const barHeight = dataArray[i] * 0.5 * currentIntensity * currentBarIntensity;
+          const intensity = dataArray[i] / 255;
+
+          let hue;
+          switch (currentBarColor) {
+            case 'blue':
+              hue = 200;
+              break;
+            case 'green':
+              hue = 120;
+              break;
+            case 'red':
+              hue = 0;
+              break;
+            case 'purple':
+              hue = 270;
+              break;
+            case 'orange':
+              hue = 30;
+              break; // Nueva opción de color
+            case 'cyan':
+              hue = 180;
+              break; // Nueva opción de color
+            case 'magenta':
+              hue = 300;
+              break; // Nueva opción de color
+            case 'yellow':
+              hue = 60;
+              break; // Nueva opción de color
+            case 'dynamic':
+            default:
+              // Mantiene el comportamiento dinámico original
+              if (intensity < 0.70) {
+                hue = 200;
+              } else if (intensity < 0.75) {
+                hue = 60;
+              } else {
+                hue = 0;
+              }
+              break;
+          }
+
+          const saturation = 70 + (intensity * 30);
+          const lightness = 30 + (intensity * 40);
+          ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+          ctx.fillRect(xBar, totalHeight - barHeight, barWidth, barHeight);
+          if (i % 5 === 0 && barHeight > 10) {
+            const reflectiveHeight = barHeight * 0.1;
+            ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.3})`;
+            ctx.fillRect(xBar, totalHeight - barHeight - reflectiveHeight, barWidth, reflectiveHeight);
+          }
+          xBar += barWidth + 0.1;
+        }
+      }
+
+      // Visualizador de Triángulos
+      if (drawTriangles && dataArray[10] > 10) {
+        if (isNaN(currentTriangleSize) || !isFinite(currentTriangleSize)) {
+          console.warn("Se detectó un currentTriangleSize inválido, restableciendo al valor por defecto.");
+          currentTriangleSize = defaultSettings.triangleSize;
+          triangleSizeSlider.value = currentTriangleSize;
+          saveSetting('triangleSize', currentTriangleSize);
+        }
+
+        const overallIntensity = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length / 255;
+        const size = (200 + (overallIntensity * 300 * currentIntensity)) * currentTriangleSize;
+        const alpha = 0.1 + (overallIntensity * 0.4);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // Obtener colores para los triángulos
+        const outerColor = getTriangleColor(currentOuterTriangleColor, alpha);
+        const innerColor = getTriangleColor(currentInnerTriangleColor, alpha * 1.5);
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(Math.PI);
+
+        // Triángulo Exterior
+        ctx.beginPath();
+        ctx.moveTo(0, -size / 2);
+        ctx.lineTo(size / 2 * Math.sqrt(3) / 2, size / 2 / 2);
+        ctx.lineTo(-size / 2 * Math.sqrt(3) / 2, size / 2 / 2);
+        ctx.closePath();
+        ctx.fillStyle = outerColor;
+        ctx.fill();
+
+        // Triángulo Interior
+        const innerSize = size * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -innerSize / 2);
+        ctx.lineTo(innerSize / 2 * Math.sqrt(3) / 2, innerSize / 2 / 2);
+        ctx.lineTo(-innerSize / 2 * Math.sqrt(3) / 2, innerSize / 2 / 2);
+        ctx.closePath();
+        ctx.fillStyle = innerColor;
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // Visualizador 3: Líneas Onduladas
+      if (drawWavy) {
+        let waveHue;
+        let strokeStyleValue;
+
+        switch (currentWaveLineColor) {
+          case 'white':
+            strokeStyleValue = 'rgba(255, 255, 255, 0.7)';
+            break;
+          case 'orange':
+            waveHue = 30;
+            strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`;
+            break;
+          case 'pink':
+            waveHue = 330;
+            strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`;
+            break;
+          case 'red':
+            waveHue = 0;
+            strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`;
+            break; // Nuevo
+          case 'green':
+            waveHue = 120;
+            strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`;
+            break; // Nuevo
+          case 'blue':
+            waveHue = 240;
+            strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`;
+            break; // Nuevo
+          case 'yellow':
+            waveHue = 60;
+            strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`;
+            break; // Nuevo
+          case 'purple':
+            waveHue = 270;
+            strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`;
+            break; // Nuevo
+          case 'cyan':
+            waveHue = 180;
+            strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`;
+            break; // Nuevo
+          case 'magenta':
+            waveHue = 300;
+            strokeStyleValue = `hsl(${waveHue}, 100%, 50%, 0.7)`;
+            break; // Nuevo
+          case 'dynamic':
+          default:
+            const averageFrequency = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
+            waveHue = 200 + (averageFrequency / 255) * 50;
+            strokeStyleValue = `hsl(${waveHue}, 70%, 60%, 0.7)`;
+            break;
+        }
+        ctx.lineWidth = 4 * currentIntensity * currentWaveIntensity;
+        ctx.strokeStyle = strokeStyleValue;
+
+        ctx.beginPath();
+        const sliceWidth = canvas.width * 2.0 / dataArray.length;
+        let lineX = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const v = dataArray[i] / 128.0;
+          const y = (v * canvas.height / 1);
+
+          if (i === 0) {
+            ctx.moveTo(lineX, y);
+          } else {
+            ctx.lineTo(lineX, y);
+          }
+          lineX += sliceWidth;
+        }
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+      }
+
+      // --- Visualizador de Fichas de Póker ---
+      if (drawChips) {
+        const overallVolume = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
+        if (pokerChips.length < MAX_POKER_CHIPS && overallVolume > 70) {
+          const chipValue = Math.floor(Math.random() * 100) + 1;
+          pokerChips.push(createPokerChip(chipValue, totalWidth, totalHeight));
+        }
+
+        for (let i = 0; i < pokerChips.length; i++) {
+          const chip = pokerChips[i];
+          chip.x += chip.vx;
+          chip.y += chip.vy;
+          chip.vy += 0.1; // Gravedad fija
+
+          if (chip.y > totalHeight + chip.baseRadius * 2 || (Math.abs(chip.vx) < 0.1 && Math.abs(chip.vy) < 0.1 && chip.y > totalHeight - chip.baseRadius - 5)) {
+            pokerChips.splice(i, 1);
+            i--;
+            continue;
+          }
+
+          const intensity = chip.value / 100;
+          let hue;
+          let chipCalculatedColor;
+          let saturation = 0;
+          let lightness = 0;
+
+          switch (currentPokerChipColor) {
+            case 'green':
+              hue = 120;
+              break;
+            case 'gray':
+              chipCalculatedColor = `rgba(150, 150, 150, ${1 - intensity * 0.5})`;
+              break;
+            case 'gold':
+              hue = 40;
+              break;
+            case 'red':
+              hue = 0;
+              break; // Nuevo
+            case 'blue':
+              hue = 240;
+              break; // Nuevo
+            case 'yellow':
+              hue = 60;
+              break; // Nuevo
+            case 'purple':
+              hue = 270;
+              break; // Nuevo
+            case 'cyan':
+              hue = 180;
+              break; // Nuevo
+            case 'magenta':
+              hue = 300;
+              break; // Nuevo
+            case 'orange':
+              hue = 30;
+              break; // Nuevo
+            case 'random':
+            default:
+              // Mantiene el comportamiento aleatorio original
+              switch (chip.colorType) {
+                case 'red':
+                  hue = 0 + (intensity * 20);
+                  break;
+                case 'yellow':
+                  hue = 60 + (intensity * 20);
+                  break;
+                case 'blue':
+                default:
+                  hue = 200 + (intensity * 4);
+                  break;
+              }
+              break;
+          }
+
+          if (currentPokerChipColor !== 'gray') {
+            saturation = 80 - (intensity * 20);
+            lightness = 40 + (intensity * 30);
+            chipCalculatedColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+          }
+
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          ctx.shadowBlur = 10;
+          ctx.shadowOffsetX = 3;
+          ctx.shadowOffsetY = 3;
+
+          ctx.beginPath();
+          ctx.arc(chip.x, chip.y, chip.baseRadius, 0, 2 * Math.PI);
+          ctx.fillStyle = chipCalculatedColor;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.closePath();
+
+          const naburaRadius = chip.baseRadius * 0.6;
+          ctx.beginPath();
+          ctx.arc(chip.x, chip.y, naburaRadius, 0, 2 * Math.PI);
+          const naburaGradient = ctx.createRadialGradient(
+            chip.x - naburaRadius * 0.3,
+            chip.y - naburaRadius * 0.3,
+            naburaRadius * 0.1,
+            chip.x,
+            chip.y,
+            naburaRadius
+          );
+
+          if (currentPokerChipColor !== 'gray') {
+            const naburaSaturation = Math.min(100, saturation + 10);
+            const naburaLightness = Math.min(100, lightness + 10);
+            naburaGradient.addColorStop(0, `hsl(${hue}, ${naburaSaturation}%, ${naburaLightness}%)`);
+            naburaGradient.addColorStop(1, chipCalculatedColor);
+          } else {
+            naburaGradient.addColorStop(0, `rgba(200, 200, 200, ${1 - intensity * 0.3})`);
+            naburaGradient.addColorStop(1, chipCalculatedColor);
+          }
+          ctx.fillStyle = naburaGradient;
+          ctx.fill();
+          ctx.closePath();
+
+          ctx.fillStyle = 'white';
+          ctx.font = `bold ${0}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(chip.value, chip.x, chip.y);
+
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+        }
+      }
+    };
+
+    function createPokerChip(value, canvasWidth, canvasHeight) {
+      const baseRadius = 0;
+      const initialX = Math.random() * (canvasWidth - baseRadius * 4) + baseRadius * 2;
+      const initialY = canvasHeight - baseRadius;
+      const vx = (Math.random() - 0.5) * 5;
+      const vy = -(5 + Math.random() * 10);
+      const colorTypes = ['blue', 'red', 'yellow', 'green', 'purple', 'cyan', 'magenta', 'orange']; // Más colores aleatorios para las fichas
+      const randomColorType = colorTypes[Math.floor(Math.random() * colorTypes.length)];
+      return {
+        x: initialX,
+        y: initialY,
+        vx: vx,
+        vy: vy,
+        baseRadius: baseRadius,
+        value: value,
+        colorType: randomColorType
+      };
     }
+
+    // --- Escuchadores de Eventos para el Panel Deslizante ---
+    openControlsButton.addEventListener('click', () => {
+      controlsPanel.classList.add('open');
+    });
+
+    closeControlsButton.addEventListener('click', () => {
+      controlsPanel.classList.remove('open');
+    });
+
+    window.addEventListener('click', (event) => {
+      if (controlsPanel.classList.contains('open') &&
+        !controlsPanel.contains(event.target) &&
+        !openControlsButton.contains(event.target)) {
+        controlsPanel.classList.remove('open');
+      }
+    });
+
+    // --- Escuchadores de Eventos del Reproductor de Música (en los controles en línea) ---
+    togglePlayPauseButton.addEventListener('click', playCurrentOrNextSong);
+    prevSongButton.addEventListener('click', playPreviousSong);
+    nextSongButton.addEventListener('click', playNextSong);
+
+    volumeSliderInline.addEventListener('input', () => {
+      audioPlayer.volume = volumeSliderInline.value;
+      saveSetting('volume', volumeSliderInline.value);
+    });
+
+    audioPlayer.addEventListener('ended', playNextSong);
+
+    // Nuevo: Escuchador del selector de canciones
+    songSelect.addEventListener('change', (event) => {
+      const newIndex = parseInt(event.target.value, 10);
+      if (newIndex !== currentSongIndex) {
+        playSpecificSong(newIndex);
+      }
+    });
+
+    // Nuevo: Escuchadores de la barra de progreso de audio
+    audioPlayer.addEventListener('timeupdate', () => {
+      songProgressBar.value = audioPlayer.currentTime;
+      currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
+    });
+
+    audioPlayer.addEventListener('loadedmetadata', () => {
+      songProgressBar.max = audioPlayer.duration;
+      totalTimeSpan.textContent = formatTime(audioPlayer.duration);
+      currentTimeSpan.textContent = formatTime(audioPlayer.currentTime); // Actualiza el tiempo actual al cargar
+    });
+
+    songProgressBar.addEventListener('input', () => {
+      audioPlayer.currentTime = songProgressBar.value;
+    });
+
+
+    // --- Escuchadores de Eventos de Configuración del Canvas (en los controles en línea) ---
+    barColorSelect.addEventListener('change', () => {
+      currentBarColor = barColorSelect.value;
+      saveSetting('barColor', currentBarColor);
+      draw();
+    });
+
+    waveLineColorSelect.addEventListener('change', () => {
+      currentWaveLineColor = waveLineColorSelect.value;
+      saveSetting('waveLineColor', currentWaveLineColor);
+      draw();
+    });
+
+    pokerChipColorSelect.addEventListener('change', () => {
+      currentPokerChipColor = pokerChipColorSelect.value;
+      saveSetting('pokerChipColor', currentPokerChipColor);
+      draw();
+    });
+
+    intensitySlider.addEventListener('input', () => {
+      currentIntensity = parseFloat(intensitySlider.value);
+      saveSetting('intensity', currentIntensity);
+      draw();
+    });
+
+    barIntensitySlider.addEventListener('input', () => {
+      currentBarIntensity = parseFloat(barIntensitySlider.value);
+      saveSetting('barIntensity', currentBarIntensity);
+      draw();
+    });
+
+    waveIntensitySlider.addEventListener('input', () => {
+      currentWaveIntensity = parseFloat(waveIntensitySlider.value);
+      saveSetting('waveIntensity', currentWaveIntensity);
+      draw();
+    });
+
+    triangleSizeSlider.addEventListener('input', () => {
+      currentTriangleSize = parseFloat(triangleSizeSlider.value);
+      saveSetting('triangleSize', currentTriangleSize);
+      draw();
+    });
+
+    innerTriangleColorSelect.addEventListener('change', () => {
+      currentInnerTriangleColor = innerTriangleColorSelect.value;
+      saveSetting('innerTriangleColor', currentInnerTriangleColor);
+      draw();
+    });
+
+    outerTriangleColorSelect.addEventListener('change', () => {
+      currentOuterTriangleColor = outerTriangleColorSelect.value;
+      saveSetting('outerTriangleColor', currentOuterTriangleColor);
+      draw();
+    });
+
+
+    visualizerTypeSelect.addEventListener('change', () => {
+      currentVisualizerTypes = Array.from(visualizerTypeSelect.selectedOptions).map(option => option.value);
+
+      if (currentVisualizerTypes.includes('all')) {
+        currentVisualizerTypes = ['all'];
+        Array.from(visualizerTypeSelect.options).forEach(option => {
+          option.selected = (option.value === 'all');
+        });
+      }
+      saveSetting('visualizerType', currentVisualizerTypes);
+      draw();
+    });
+
+    // Nuevo: Escuchador de Eventos para el Botón de Reinicio
+    resetDefaultsButton.addEventListener('click', resetSettings);
+
+
+    // Carga inicial de las configuraciones cuando el script inicia
+    loadSettings();
+    draw();
+  } else {
+    console.log("No estás en la página de inicio de la extensión.");
+    // No hacer nada si no estamos en la página de inicio
+  }
 });
