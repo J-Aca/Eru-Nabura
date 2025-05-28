@@ -156,7 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (drawTriangles && dataArray[10] > 10) {
                 if (isNaN(currentTriangleSize) || !isFinite(currentTriangleSize)) {
 resetSettings();
-desactivado /*
+//desactivado :(
+/*
                     console.warn("Se detectó un currentTriangleSize inválido, restableciendo al valor por defecto.");
                     currentTriangleSize = defaultSettings.triangleSize;
                     triangleSizeSlider.value = currentTriangleSize;
