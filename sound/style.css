@@ -10,10 +10,6 @@
 ::-webkit-scrollbar-track {
     background: #242424;
 } 
-#none {
-    content-visibility: hidden;
-display: none;
-}
 #erudito {
     margin: 0;
     overflow: hidden; /* Prevent scrollbars when menu is out of bounds */
@@ -96,7 +92,7 @@ transition: right 0.5s ease-in-out; /* Smooth sliding transition */
 }
 
 .music-controls button,
-.volume-control-inline button {
+.volume-control-inline button,#addSongsButton {
     padding: 8px 15px;
     font-size: 0.9em;
     background-color: #007bff;
@@ -106,7 +102,10 @@ transition: right 0.5s ease-in-out; /* Smooth sliding transition */
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
-
+#addSongsButton {
+    padding: 8px 8px !important;
+    margin-left: 5px;
+}
 .music-controls button:hover,
 .volume-control-inline button:hover {
     background-color: #0056b3;
